@@ -7,8 +7,19 @@
     <link href="styleMap.css" type="text/css" rel="stylesheet">
 </head>
 <body>
-    <canvas id="c1" width="1200" height="800"></canvas>
     <h1>Perlin Based Map Generator</h1>
+    <div class='parent'>
+        <div class="child inline-block-child" >
+            <canvas id="c1" width="1200" height="800"></canvas>
+        </div>
+        <div class="child inline-block-child">
+            
+            <input type="range" min="1" max="100" value="50" class="slider" id="myRange">
+            <input type="range" min="1" max="100" value="50" class="slider" id="myRange">
+            <input type="range" min="1" max="100" value="50" class="slider" id="myRange">
+        </div>
+    </div>
+
     <script src="perlinNoise.js"></script>
     <script src="TerrainGen.js"></script>
     <script>
@@ -19,64 +30,30 @@
         terrainTypes = ['Water', 'FlatLand', 'Mountain']
 
         const hasCoast = true
-        const isIsland = true
+        const isIsland = false
+        const waterLevel = -40
+        const mountainLevel = 50
+        const ruggedness = 1 //Effects how flat or rugged terrain is
         const width = 100
         const height = 80
         const blockSize = 10
-        const terrain = []
-        for(let i = 0; i < width; i++){
-            let row = []
-            for(let j = 0; j < height; j++){
-                pNoise = perlin_noise(i,j) * 100
-                row.push(pNoise)      
-            }
-            terrain.push(row)
-        }
 
-        if(hasCoast){
-            for(let i = 0; i < width; i++){
-                //terrain[i][0] = -100;
-                terrain[i][height] = -100;
-            }
-        }
+        Terrain.genNewTerrain()
+        Terrain.avgSmooth(7)
+        console.log(Terrain.terrain)
 
-        if(isIsland){
-            for(let i = 0; i < width; i++){
-                terrain[i][0] = -100;
-                terrain[i][height-1] = -100;
-            }
-            for(let i = 0; i < height; i++){
-                terrain[width-1][i] = -100;
-                terrain[0][i]= -100;
-            }
-        }
-
-        avgSmooth()
-        avgSmooth()
-        avgSmooth()
-        avgSmooth()
-        avgSmooth()
-        avgSmooth()
-        avgSmooth()
-        avgSmooth()
-     
- 
-
-
-        //terrain = cellSmooth(terrain, 4)
-        console.log(terrain)
-
-        for(let i = 1; i < terrain.length-1; i++){
-            for(let j = 1; j < terrain[0].length; j++){
-                shade = 100 + (terrain[i][j])
+        for(let i = 1; i < Terrain.terrain.length-1; i++){
+            for(let j = 1; j < Terrain.terrain[0].length; j++){
+                Terrain.terrain[i][j] *= ruggedness
+                shade = 100 + (Terrain.terrain[i][j])
                 var  color = 'rgb(0,'+ shade + ',0 )'
-                if(terrain[i][j] < -30){
+                if(Terrain.terrain[i][j] < waterLevel){
                     var  color = 'rgb(0,0,'+ (shade+50)+ ')'
                 }
-                if(terrain[i][j] > 35){
+                if(Terrain.terrain[i][j] > mountainLevel){
                     var  color = 'rgb(' + shade+ ','+shade +',' +shade+ ')'
                 }
-                if(terrain[i][j] > 65){
+                if(Terrain.terrain[i][j] > 70){
                     var  color = 'rgb(255,255,255)'
                 }
                 DrawPoint(i*blockSize,j*blockSize,blockSize,color)
@@ -88,65 +65,6 @@
         function DrawPoint(x,y,size,color){
             ctx.fillStyle = color;
             ctx.fillRect(x,y,size,size);
-        }
-
-        function avgSmooth(){
-            for(let x = 1; x  < terrain.length -1; x++){
-                for(let y = 1; y < terrain[0].length-1; y++){
-
-                    terrain[x][y] += terrain[x+1][y]
-                    terrain[x][y] += terrain[x+1][y+1]
-                    terrain[x][y] += terrain[x][y+1]
-                    terrain[x][y] += terrain[x-1][y+1]
-                    terrain[x][y] += terrain[x-1][y]
-                    terrain[x][y] += terrain[x-1][y-1]
-                    terrain[x][y] += terrain[x][y-1]
-                    terrain[x][y] += terrain[x+1][y-1]
-                    terrain[x][y] /= 8
-                }
-            }
-        }
-
-        function cellSmooth(terrain, cycleNum){
-            let newTerrain = []
-            for(let c = 0; c < cycleNum; c++ ){
-
-                for(let i = 1; i < (width-1); i++){
-                    let newTerrainRow = []
-                    for(let j = 1; j < (height-1); j++){
-                        newTerrainRow.push(SmoothTerrain(i,j,terrain));
-                    }
-                    newTerrain.push(newTerrainRow)
-                }
-                terrain = newTerrain
-            }
-            return newTerrain
-        }
-
-        function SmoothTerrain(x,y,terrain){
-
-            let terrainCount = [0,0,0]
-            waterThreshold = 1
-            landThreshold = 7
-            mountThreshold = 2
-
-            terrainCount[(terrain[x][y])] +=1
-            terrainCount[(terrain[x+1][y])] += 1
-            terrainCount[(terrain[x+1][y+1])] += 1
-            terrainCount[(terrain[x+1][y-1])] += 1
-            terrainCount[(terrain[x][y+1])] +=1
-            terrainCount[(terrain[x-1][y])] += 1
-            terrainCount[(terrain[x-1][y-1])] += 1
-            terrainCount[(terrain[x-1][y+1])] += 1
-            terrainCount[(terrain[x][y-1])] +=1
-
-            if(terrainCount[0] > waterThreshold){
-                return 0
-            }
-            if(terrainCount[2] > mountThreshold){
-                return 2
-            }
-            return 1
         }
 
 
