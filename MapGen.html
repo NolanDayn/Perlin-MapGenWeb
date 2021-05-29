@@ -8,17 +8,42 @@
 </head>
 <body>
     <h1>Perlin Based Map Generator</h1>
-    <div class='parent'>
-        <div class="child inline-block-child" >
-            <canvas id="c1" width="1200" height="800"></canvas>
+
+    <div class="flex-container">
+  
+        <canvas class="map" id="c1" width="1000" height="600"></canvas>
+
+        <div class="mapParams">
+            <h4>Water Level</h4>
+            <input type="range" min="1" max="100" value="50" class="slider" id="waterLevel">
+            <h4>Roughness</h4>
+            <input type="range" min="1" max="20" value="10" class="slider" id="roughness">
+            <h4>Temperature</h4>
+            <input type="range" min="1" max="10" value="5" class="slider" id="temperature">
+            <h4>Rainfall</h4>
+            <input type="range" min="1" max="10" value="5" class="slider" id="rainfall">
+
+            <h4>Surrounding Waters</h4>
+            <input type="radio" id="islandButton" name="coasts" value="island" checked>
+            <label for="islandButton">Is Island</label><br>
+            <input type="radio" id="coastButton" name="coasts" value="coast">
+            <label for="coastButton">Coast</label><br>
+            <input type="radio" id="landlockedButton" name="coasts" value="landlocked">
+            <label for="landlockedButton">Landlocked</label><br>
+
+            <h4>Lattitude</h4>
+            <input type="radio" id="highLatButton" name="latitude" value="highLat" checked>
+            <label for="highLatButton">High Latitude</label><br>
+            <input type="radio" id="tropicButton" name="latitude" value="tropic">
+            <label for="tropicButton">Tropic</label><br>
+            <input type="radio" id="lowLatButton" name="latitude" value="lowLat">
+            <label for="highLatButton">Low Latitude</label><br>
+
+
+            <button type="button" onclick=GenerateMap()>Generate Map</button>
         </div>
-        <div class="child inline-block-child">
-            
-            <input type="range" min="1" max="100" value="50" class="slider" id="myRange">
-            <input type="range" min="1" max="100" value="50" class="slider" id="myRange">
-            <input type="range" min="1" max="100" value="50" class="slider" id="myRange">
-        </div>
-    </div>
+    
+    </div>  
 
     <script src="perlinNoise.js"></script>
     <script src="TerrainGen.js"></script>
@@ -27,40 +52,55 @@
         const canvas = document.getElementById('c1');
         const ctx = canvas.getContext('2d');
 
-        terrainTypes = ['Water', 'FlatLand', 'Mountain']
-
-        const hasCoast = true
-        const isIsland = false
-        const waterLevel = -40
         const mountainLevel = 50
-        const ruggedness = 1 //Effects how flat or rugged terrain is
         const width = 100
-        const height = 80
+        const height = 60
         const blockSize = 10
 
-        Terrain.genNewTerrain()
-        Terrain.avgSmooth(7)
-        console.log(Terrain.terrain)
+        GenerateMap()
 
-        for(let i = 1; i < Terrain.terrain.length-1; i++){
-            for(let j = 1; j < Terrain.terrain[0].length; j++){
-                Terrain.terrain[i][j] *= ruggedness
-                shade = 100 + (Terrain.terrain[i][j])
-                var  color = 'rgb(0,'+ shade + ',0 )'
-                if(Terrain.terrain[i][j] < waterLevel){
-                    var  color = 'rgb(0,0,'+ (shade+50)+ ')'
-                }
-                if(Terrain.terrain[i][j] > mountainLevel){
-                    var  color = 'rgb(' + shade+ ','+shade +',' +shade+ ')'
-                }
-                if(Terrain.terrain[i][j] > 70){
-                    var  color = 'rgb(255,255,255)'
-                }
-                DrawPoint(i*blockSize,j*blockSize,blockSize,color)
-            }
+        function GetParameters(){
+            var waterLevel = document.getElementById("waterLevel").value - 75 //Possible values are -75 to 25
+            var roughness = (document.getElementById("roughness").value)/10 //Possible Values are 0 to 3
+            var rainfall = (document.getElementById("rainfall").value)*10 //Possible values are 10 to 100
+            var temperature = document.getElementById("temperature").value*10
+            var coasts = document.querySelector('input[name="coasts"]:checked').value;
+
+            console.log(coasts)
+
+            return params = {waterLevel, roughness, coasts, rainfall, temperature}
         }
 
-        
+
+        function GenerateMap(){
+            GetParameters()
+            console.log(params.waterLevel)
+            Terrain.genNewTerrain(params.coasts)
+            Terrain.avgSmooth(7)
+            console.log(Terrain.terrain)
+            Terrain.determineBiomes(params.temperature,params.rainfall, params.roughness, params.waterLevel)
+            console.log(Terrain.terrain)
+            for(let i = 1; i < Terrain.terrain.length-1; i++){
+                for(let j = 1; j < Terrain.terrain[0].length-1; j++){
+                    //Terrain.terrain[i][j] *= params.roughness
+                    shade = 200 + (Terrain.terrain[i][j].elevation)
+                    var  color = 'rgb('+(params.rainfall*13)+','+ (shade+(4*params.rainfall)) + ','+(params.rainfall*2)+ ')'
+                   // if(Terrain.terrain[i][j].elevation  < params.waterLevel){
+                   //     color = 'rgb(0,0,'+ (200+Terrain.terrain[i][j].elevation)+ ')'
+                   // }
+                   // else if(Terrain.terrain[i][j].elevation > params.waterLevel){
+                    color = Terrain.terrain[i][j].color
+                   // }
+                    //if(Terrain.terrain[i][j] > mountainLevel){
+                    //    var  color = 'rgb(' + shade+ ','+shade +',' +shade+ ')'
+                   // }
+                   // if(Terrain.terrain[i][j] > 80){
+                   //     var  color = 'rgb(200,200,' + (50 +shade)+')'
+                   // }
+                    DrawPoint(i*blockSize,j*blockSize,blockSize,color)
+                }
+            }
+        }
 
         function DrawPoint(x,y,size,color){
             ctx.fillStyle = color;
