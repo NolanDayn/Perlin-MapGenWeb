@@ -45,8 +45,7 @@ var Terrain = {
                 this.terrain[i][height-1] = -100;
             }
         }
-
-        if(coasts == 'island'){
+        else if(coasts == 'island'){
             for(let i = 0; i < width; i++){
                 this.terrain[i][0] = -100;
                 this.terrain[i][height-1] = -100;
@@ -56,9 +55,19 @@ var Terrain = {
                 this.terrain[0][i]= -100;
             }
         }
+        else if(coasts == 'landlocked'){
+            for(let i = 0; i < width; i++){
+                this.terrain[i][0] = 10 + Math.random()*10;
+                this.terrain[i][height-1] = 10 + Math.random()*10;
+            }
+            for(let i = 0; i < height; i++){
+                this.terrain[width-1][i] = 10 + Math.random()*10;
+                this.terrain[0][i]= 10 + Math.random()*10;
+            }
+        }
     },
 
-    determineBiomes: function(baseTemp, basePrecip, roughness, waterlevel){
+    determineBiomes: function(baseTemp, basePrecip, roughness, waterlevel, latitude){
 
         for(let i = 0; i < this.terrain.length-1; i++){
             for(let j = 0; j < this.terrain[0].length-1; j++){
@@ -81,28 +90,48 @@ var Terrain = {
 
                 //Calculate temp
                 //Calculate effects of lattitude
-                temp = baseTemp - (eCalc/1) //decrease temp by 1 for ever 5 gained in elevation max elevation is about 100 typically
+                temp = baseTemp - (eCalc/10) //decrease temp by 1 for ever 5 gained in elevation max elevation is about 100 typically
+
 
                 //calculate rainfall
                 //close to water effect
                 //rainshadow effect
-                precip = basePrecip - (eCalc/2) //decrease precip by 1 for every 5 gained in elevation
+                precip = basePrecip - (eCalc/10) //decrease precip by 1 for every 5 gained in elevation
 
-                //Try to keep both precip and temp on 0 to 100 scale
-                temp = Math.floor((temp + 50)/40)
+                //high altitude effect
+                if(elevation > 60){
+                    precip -= 25
+                    temp -= 25
+                }
+
+                //mountain top effect
+                if(elevation > 90){
+                    precip -= 25 
+                    temp -= 50
+                }
+
+                if(latitude == 'highLat'){
+                    temp += j/3
+                }
+                else if(latitude == 'lowLat'){
+                    temp -= j/3
+                }
+
+                //temp is on -50 to 50 scale
+                temp = Math.floor((temp + 50)/25)
                 if(temp < 0){
                     temp = 0;
                 }
-                else if(temp > 4){
-                    temp = 4
+                else if(temp > 3){
+                    temp = 3
                 }
 
-                precip = Math.floor((precip + 50)/40)
+                precip = Math.floor((precip)/25) //precip is on 0 to 100 scale
                 if(precip < 0){
                     precip = 0;
                 }
-                else if(precip > 4){
-                    precip = 4
+                else if(precip > 3){
+                    precip = 3
                 }
 
                 this.terrain[i][j] = biomeTypes[temp][precip]

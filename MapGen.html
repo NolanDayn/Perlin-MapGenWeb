@@ -21,7 +21,7 @@
             <h4>Temperature</h4>
             <input type="range" min="1" max="10" value="5" class="slider" id="temperature">
             <h4>Rainfall</h4>
-            <input type="range" min="1" max="10" value="5" class="slider" id="rainfall">
+            <input type="range" min="1" max="10" value="6" class="slider" id="rainfall">
 
             <h4>Surrounding Waters</h4>
             <input type="radio" id="islandButton" name="coasts" value="island" checked>
@@ -63,12 +63,13 @@
             var waterLevel = document.getElementById("waterLevel").value - 75 //Possible values are -75 to 25
             var roughness = (document.getElementById("roughness").value)/10 //Possible Values are 0 to 3
             var rainfall = (document.getElementById("rainfall").value)*10 //Possible values are 10 to 100
-            var temperature = document.getElementById("temperature").value*10
+            var temperature = (document.getElementById("temperature").value*10) -50
             var coasts = document.querySelector('input[name="coasts"]:checked').value;
+            var latitude = document.querySelector('input[name="latitude"]:checked').value;
 
             console.log(coasts)
 
-            return params = {waterLevel, roughness, coasts, rainfall, temperature}
+            return params = {waterLevel, roughness, coasts, rainfall, temperature, latitude}
         }
 
 
@@ -78,25 +79,18 @@
             Terrain.genNewTerrain(params.coasts)
             Terrain.avgSmooth(7)
             console.log(Terrain.terrain)
-            Terrain.determineBiomes(params.temperature,params.rainfall, params.roughness, params.waterLevel)
+            Terrain.determineBiomes(params.temperature,params.rainfall, params.roughness, params.waterLevel,params.latitude)
             console.log(Terrain.terrain)
             for(let i = 1; i < Terrain.terrain.length-1; i++){
                 for(let j = 1; j < Terrain.terrain[0].length-1; j++){
-                    //Terrain.terrain[i][j] *= params.roughness
+
                     shade = 200 + (Terrain.terrain[i][j].elevation)
                     var  color = 'rgb('+(params.rainfall*13)+','+ (shade+(4*params.rainfall)) + ','+(params.rainfall*2)+ ')'
-                   // if(Terrain.terrain[i][j].elevation  < params.waterLevel){
-                   //     color = 'rgb(0,0,'+ (200+Terrain.terrain[i][j].elevation)+ ')'
-                   // }
-                   // else if(Terrain.terrain[i][j].elevation > params.waterLevel){
+
                     color = Terrain.terrain[i][j].color
-                   // }
-                    //if(Terrain.terrain[i][j] > mountainLevel){
-                    //    var  color = 'rgb(' + shade+ ','+shade +',' +shade+ ')'
-                   // }
-                   // if(Terrain.terrain[i][j] > 80){
-                   //     var  color = 'rgb(200,200,' + (50 +shade)+')'
-                   // }
+                    //colorNum = Math.floor(Terrain.terrain[i][j].color + (( eColor*65025) + ( eColor*255) + eColor))
+                    //color = "#" + (colorNum).toString(16)
+
                     DrawPoint(i*blockSize,j*blockSize,blockSize,color)
                 }
             }
@@ -107,7 +101,9 @@
             ctx.fillRect(x,y,size,size);
         }
 
-
+        function adjust(color, amount) {
+            return '#' + color.replace(/^#/, '').replace(/../g, color => ('0'+Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)).substr(-2));
+        }
     </script>
 </body>
 </html>
